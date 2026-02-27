@@ -199,6 +199,7 @@ def check():
     text = data.get("text", "")
     llm_score = data.get("llm_score")
     llm_category = data.get("llm_category")
+    llm_reason = data.get("llm_reason")
 
     if not url:
         return jsonify({"error": "Missing URL"}), 400
@@ -322,6 +323,7 @@ def check():
     result = {
         "trust_score": final_score,
         "status": status,
+        "reason": llm_reason if llm_reason else "No specific reason provided.",
         "method": "stable-production-engine"
     }
 
