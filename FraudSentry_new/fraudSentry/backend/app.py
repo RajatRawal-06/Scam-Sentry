@@ -7,7 +7,7 @@ import whois
 from urllib.parse import urlparse
 from datetime import datetime
 import os
-import difflib
+import Levenshtein
 
 app = Flask(__name__)
 CORS(app)
@@ -19,28 +19,31 @@ DB_PATH = os.path.join(BASE_DIR, "stats.db")
 TOP_LIST_PATH = os.path.join(BASE_DIR, "top-1m.csv")
 
 # =====================================================
-# LOAD TRAFFIC DATA + BRAND TOKENS
+# LOAD TRAFFIC DATA + HIGH VALUE BRANDS
 # =====================================================
 
 TOP_DOMAINS = set()
-BRAND_TOKENS = set()
+HIGH_VALUE_BRANDS = set()
 
 def load_top_domains():
     try:
         with open(TOP_LIST_PATH, newline='', encoding="utf-8") as f:
             reader = csv.reader(f)
+            count = 0
             for row in reader:
                 if len(row) > 1:
                     domain = row[1].strip().lower()
                     TOP_DOMAINS.add(domain)
 
-                    # Extract root brand token
-                    token = domain.split(".")[0]
-                    if len(token) >= 3:
-                        BRAND_TOKENS.add(token)
+                    # Protect top 1000 brands only
+                    if count < 1000:
+                        token = domain.split(".")[0]
+                        if len(token) >= 3:
+                            HIGH_VALUE_BRANDS.add(token)
+                    count += 1
 
         print(f"[Traffic] Loaded {len(TOP_DOMAINS)} domains")
-        print(f"[Brand] Extracted {len(BRAND_TOKENS)} brand tokens")
+        print(f"[Brands] Protected {len(HIGH_VALUE_BRANDS)} high-value brands")
 
     except Exception as e:
         print("Traffic load error:", e)
@@ -100,6 +103,7 @@ def get_domain_age_days(domain):
 PIRACY_KEYWORDS = ["repack", "fitgirl", "torrent", "crack", "warez", "patch"]
 STREAMING_KEYWORDS = ["flix", "stream", "movies", "watchfree", "hd"]
 RISKY_TLDS = [".xyz", ".top", ".site", ".icu", ".online"]
+SENSITIVE_WORDS = ["bank", "login", "secure", "verify", "account"]
 
 def analyze_structure(url):
     parsed = urlparse(url)
@@ -113,18 +117,23 @@ def analyze_structure(url):
     return piracy, streaming, risky_tld
 
 # =====================================================
-# TYPOSQUATTING DETECTION
+# STRICT TYPOSQUATTING (Levenshtein)
 # =====================================================
 
 def is_typosquatting(domain):
+
+    if domain in TOP_DOMAINS:
+        return False, None
+
     root = domain.split(".")[0]
 
-    for legit_token in BRAND_TOKENS:
-        if abs(len(root) - len(legit_token)) <= 2:
-            similarity = difflib.SequenceMatcher(None, root, legit_token).ratio()
+    for brand in HIGH_VALUE_BRANDS:
+        if abs(len(root) - len(brand)) <= 1:
+            distance = Levenshtein.distance(root, brand)
 
-            if similarity > 0.88 and root != legit_token:
-                return True, legit_token
+            if distance == 1 and root != brand:
+                if any(word in domain for word in SENSITIVE_WORDS):
+                    return True, brand
 
     return False, None
 
@@ -191,11 +200,7 @@ def check():
     piracy, streaming, risky_tld = analyze_structure(url)
     domain_age = get_domain_age_days(domain)
 
-    # ============================
-    # 1️⃣ TYPOSQUATTING DETECTION
-    # ============================
-
-    typo_flag, legit_match = is_typosquatting(domain)
+    typo_flag, matched_brand = is_typosquatting(domain)
 
     # =====================================================
     # STABLE WEIGHTED SCORING
@@ -234,20 +239,23 @@ def check():
     final_score = max(0, min(100, final_score))
 
     # =====================================================
+    # HIGH REPUTATION SHIELD (Fix LLM Hallucination)
+    # =====================================================
+
+    if domain in TOP_DOMAINS and not piracy and not streaming and not risky_tld:
+        if risk_category in ["malware", "phishing"]:
+            risk_category = "unknown"
+            final_score = max(final_score, 75)
+
+    # =====================================================
     # HARD OVERRIDES
     # =====================================================
 
-    # 2️⃣ Brand impersonation from typo detection
     if typo_flag:
         status = "dangerous"
         final_score = min(final_score, 30)
 
-    # 3️⃣ LLM detected phishing/impersonation
-    elif risk_category in ["phishing"]:
-        status = "dangerous"
-        final_score = min(final_score, 35)
-
-    elif risk_category == "malware":
+    elif risk_category in ["phishing", "malware"] and domain not in TOP_DOMAINS:
         status = "dangerous"
         final_score = min(final_score, 35)
 
@@ -269,7 +277,7 @@ def check():
 
     result["trust_score"] = final_score
     result["status"] = status
-    result["method"] = "full-impersonation-engine"
+    result["method"] = "final-production-engine"
 
     save_to_db(url, status, final_score)
 
