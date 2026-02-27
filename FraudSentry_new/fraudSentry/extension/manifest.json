@@ -1,31 +1,40 @@
 {
-"manifest_version": 3,
-"name": "Fraud-Sentry",
-"version": "1.0",
-"description": "AI-powered scam and piracy detection extension",
+  "manifest_version": 3,
+  "name": "Fraud-Sentry",
+  "version": "2.0",
+  "description": "AI-powered scam and piracy detection extension",
 
+  "permissions": [
+    "storage",
+    "activeTab",
+    "scripting"
+  ],
 
-"permissions": ["storage", "activeTab", "scripting"],
+  "host_permissions": [
+    "http://localhost:5000/*"
+  ],
 
+  "background": {
+    "service_worker": "background.js",
+    "type": "module"
+  },
 
-"host_permissions": ["http://localhost:5000/*"],
+  "action": {
+    "default_popup": "popup.html"
+  },
 
+  "content_scripts": [
+    {
+      "matches": ["<all_urls>"],
+      "js": ["content.js"],
+      "css": ["style.css"]
+    }
+  ],
 
-"background": {
-"service_worker": "background.js"
-},
-
-
-"action": {
-"default_popup": "popup.html"
-},
-
-
-"content_scripts": [
-{
-"matches": ["<all_urls>"],
-"js": ["content.js"],
-"css": ["style.css"]
-}
-]
+  "web_accessible_resources": [
+    {
+      "resources": ["models/*"],
+      "matches": ["<all_urls>"]
+    }
+  ]
 }
