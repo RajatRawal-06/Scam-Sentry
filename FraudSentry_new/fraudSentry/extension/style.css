@@ -1,0 +1,223 @@
+/* --- Main Frame Setup --- */
+.frame {
+  background: linear-gradient(129deg, rgba(0, 43, 55, 1) 0%, rgba(0, 104, 133, 1) 100%);
+  width: 360px;
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+  /* Smooth resize transition */
+  transition: height 0.3s ease; 
+}
+
+/* --- DYNAMIC HEIGHT MODES --- */
+.frame.scan-mode {
+  height: 250px;
+}
+
+.frame.result-mode {
+  height: 500px;
+}
+
+/* --- Shared Elements --- */
+.logo-container {
+  position: absolute;
+  top: 40px;
+  width: 360px;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  z-index: 10;
+}
+
+.logo-img {
+  max-width: 230px;
+  height: auto;
+}
+
+/* --- VIEW 1: SCAN UI SPECIFICS --- */
+.scan-button {
+  position: absolute;
+  top: 164px;
+  left: 82px;
+  width: 196px;
+  height: 40px;
+  background: transparent;
+  border: none;
+  padding: 0;
+  cursor: pointer;
+  display: block;
+  transition: transform 0.1s;
+}
+
+.scan-button:active {
+  transform: scale(0.98);
+}
+
+.scan-button .img {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 196px;
+  height: 40px;
+}
+
+.scan-button .div {
+  position: absolute;
+  top: 8px;
+  width: 100%;
+  left: 0;
+  text-align: center;
+  mix-blend-mode: hard-light;
+  font-family: "Roboto-Bold", Helvetica, sans-serif;
+  font-weight: 700;
+  color: #002b37;
+  font-size: 20px;
+  letter-spacing: 0;
+  line-height: normal;
+  white-space: nowrap;
+}
+
+/* --- VIEW 2: RESULT UI SPECIFICS --- */
+
+/* The Glass Rectangle */
+.rectangle {
+  position: absolute;
+  top: 140px;
+  left: calc(50% - 151px);
+  width: 302px;
+  height: 120px;
+  
+  border: 1px solid transparent;
+  backdrop-filter: blur(15px) brightness(100%);
+  -webkit-backdrop-filter: blur(15px) brightness(100%);
+  border-image: linear-gradient(105deg, rgba(255, 255, 255, 0) 0%, rgba(255, 255, 255, 0.25) 100%) 1;
+  background: linear-gradient(180deg, rgba(217, 217, 217, 0.2) 0%, rgba(115, 115, 115, 0) 100%);
+  
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+/* Analysis Text Container */
+.analysis-text-container {
+  position: absolute;
+  top: 280px;
+  width: 100%;
+  padding: 0 30px;
+  text-align: center;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+}
+
+/* Components */
+.circular-progress {
+  position: relative;
+  height: 80px;
+  width: 80px;
+  border-radius: 50%;
+  background: conic-gradient(#2ecc71 3.6deg, #333 0deg);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  box-shadow: 0 4px 10px rgba(0,0,0,0.3);
+}
+
+.circular-progress::before {
+  content: "";
+  position: absolute;
+  height: 64px;
+  width: 64px;
+  border-radius: 50%;
+  background-color: #002b37;
+}
+
+.percentage {
+  position: relative;
+  font-family: "Roboto-Bold", sans-serif;
+  font-size: 18px;
+  font-weight: bold;
+  color: #fff;
+  z-index: 2;
+}
+
+.status-box {
+  font-family: "Roboto-Bold", sans-serif;
+  font-weight: 800;
+  font-size: 20px;
+  margin-bottom: 10px;
+  letter-spacing: 1.5px;
+  color: #fff;
+  text-shadow: 0 2px 4px rgba(0,0,0,0.3);
+}
+
+/* --- UPDATED REASON TEXT --- */
+#reason-text {
+  font-family: "Roboto", sans-serif;
+  font-size: 13px;
+  line-height: 1.5;
+  color: #e0e0e0;
+  
+  /* Text Truncation Rules */
+  max-width: 280px;         
+  display: -webkit-box;     
+  -webkit-line-clamp: 6;    /* UPDATED: Increased to 6 lines */
+  -webkit-box-orient: vertical;
+  overflow: hidden;         
+  text-overflow: ellipsis;  
+}
+
+/* Bottom Buttons */
+.button-group {
+  position: absolute;
+  bottom: 30px;
+  left: 29px;
+  display: flex;
+  gap: 52px;
+  align-items: center;
+}
+
+.know-more-button, .refresh-button {
+  position: relative;
+  width: 125px;
+  height: 40px;
+  background: transparent;
+  border: none;
+  padding: 0;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: opacity 0.2s;
+}
+
+.know-more-button-icon, .refresh-icon {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  pointer-events: none;
+}
+
+.know-more-button .text-wrapper, .refresh-button .div {
+  position: relative;
+  z-index: 1;
+  font-family: "Roboto-Bold", Helvetica, sans-serif;
+  font-weight: 700;
+  font-size: 12px;
+  pointer-events: none;
+}
+
+.know-more-button .text-wrapper {
+  color: #ffffff;
+  mix-blend-mode: overlay;
+}
+
+#rescanBtn .div {
+    color: #002b37; 
+    mix-blend-mode: hard-light;
+}
+
+.know-more-button:hover, .refresh-button:hover { opacity: 0.9; }

@@ -1,0 +1,233 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>FraudSentry | Live Analytics</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@400;500;600;700&display=swap" rel="stylesheet">
+
+
+    <style>
+        .badge-danger-custom {
+            background-color: #C84A4A;
+            color: white;
+        }
+
+        .badge-safe-custom {
+            background-color: #34a894;
+            color: #ffffff;
+        }
+
+
+
+        .bg-danger {
+            background-color: #C84A4A !important;
+        }
+
+        .border-danger {
+            border-color: #C84A4A !important;
+        }
+
+        .bg-success {
+            background-color: #3FD1B8 !important;
+        }
+
+        
+        body { 
+            background-color: #001a21; 
+            color: white; 
+            font-family: 'Roboto', sans-serif;
+            font-weight: 400;   /* SemiBold */
+        }
+
+        .card { 
+            background-color: #002b37; 
+            border: 1px solid #3edbd0; 
+            color: white; 
+            border-radius: 0; 
+        }
+        .table { color: white; }
+        .text-teal { color: #3edbd0; }
+        .text-time { color: #adb5bd; font-family: 'Courier New', monospace; font-size: 0.85rem; } 
+
+        .stat-number { 
+            font-size: 2.4rem;
+            font-weight: 900; 
+            color: #3edbd0; 
+        }
+        
+        .dashboard-logo {
+            max-width: 700px;
+            height: auto;
+            display: block;
+            transform: translateY(50px);
+             margin-top: -60px; 
+        }
+
+        .chart-container {
+            position: relative; 
+            height: 100px;
+            width: 100%; 
+            display: flex; 
+            align-items: center; 
+            justify-content: center;
+        }
+        
+        .card-header-custom {
+            font-size: 1.3rem;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            margin-bottom: 5px;
+            font-weight: 800;
+            color: #3edbd0;
+        }
+
+        .badge-ist {
+            background-color: transparent;
+            border: 1px solid #3edbd0;
+            color: #3edbd0;
+            font-size: 0.7rem;
+            vertical-align: middle;
+        }
+    </style>
+</head>
+<body>
+    <div class="container py-4">
+        
+        <div class="mb-1">
+            <img src="{{ url_for('static', filename='heading.png') }}" alt="FraudSentry" class="dashboard-logo">
+        </div>
+        
+        <div class="row mb-4 align-items-stretch">
+            
+            <div class="col-md-4 mb-3">
+                <div class="card p-3 text-center h-100 d-flex flex-column justify-content-center">
+                    <div class="card-header-custom">Total Sites Scanned</div>
+                    <div class="stat-number">{{ total }}</div>
+                </div>
+            </div>
+
+            <div class="col-md-4 mb-3">
+                <div class="card p-3 text-center border-danger h-100 d-flex flex-column justify-content-center">
+                    <div class="card-header-custom text-danger">Scams Detected</div>
+                    <div class="stat-number text-danger">{{ scams }}</div>
+                </div>
+            </div>
+
+            <div class="col-md-4 mb-3">
+                <div class="card p-2 h-100 d-flex flex-column justify-content-center align-items-center">
+                    <div class="chart-container">
+                        <canvas id="scamChart"></canvas>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="card p-4">
+            <div class="d-flex justify-content-between align-items-center mb-3">
+                <h5 class="text-teal m-0">Live Threat Feed</h5>
+                <span class="badge badge-ist">Zone: IST (UTC+5:30)</span>
+            </div>
+            
+            {% if recent %}
+            <table class="table table-dark table-hover table-sm">
+                <thead>
+                    <tr>
+                        <th>URL</th>
+                        <th>Result</th>
+                        <th>Score</th>
+                        <th>Time</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for row in recent %}
+                    <tr>
+                        <td class="text-truncate" style="max-width: 250px;">{{ row[0] }}</td>
+                       <td>
+                            {% if row[1] == 1 %}
+                            <span class="badge badge-danger-custom">DANGEROUS</span>
+                            {% else %}
+                            <span class="badge badge-safe-custom">SAFE</span>
+                            {% endif %}
+                        </td>
+
+                        <td>{{ row[2] }}%</td>
+                        <td class="text-time time-convert" data-utc="{{ row[3] }}">{{ row[3] }}</td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+            {% else %}
+            <p class="text-center text-muted">No scans recorded yet.</p>
+            {% endif %}
+        </div>
+    </div>
+
+    <script>
+        // --- 1. Chart.js Implementation ---
+        const ctx = document.getElementById('scamChart').getContext('2d');
+        new Chart(ctx, {
+            type: 'doughnut',
+            data: {
+                labels: ['Safe', 'Scam'],
+                datasets: [{
+                    data: [{{ (total - scams) }}, {{ scams }}],
+                    backgroundColor: ['#3FD1B8', '#C84A4A'], // green, red (theme matched)
+                    borderWidth: 0
+                }]
+
+            },
+            options: { 
+                responsive: true,
+                maintainAspectRatio: false,
+                plugins: { 
+                    legend: { 
+                        position: 'right',
+                        labels: { 
+                            color: 'white',
+                            boxWidth: 10,
+                            font: { size: 10 }
+                        } 
+                    } 
+                } 
+            }
+        });
+
+        // --- 2. IST Time Converter ---
+        function updateToIST() {
+            const timeElements = document.querySelectorAll('.time-convert');
+            
+            timeElements.forEach(el => {
+                let rawDate = el.getAttribute('data-utc');
+                
+                if (rawDate) {
+                    // Standardize the string: Replace space with 'T' and add 'Z' (UTC)
+                    // This prevents the browser from assuming it's already local time
+                    let utcFormatted = rawDate.replace(" ", "T") + "Z";
+                    let dateObj = new Date(utcFormatted);
+
+                    // Check if date is valid
+                    if (!isNaN(dateObj)) {
+                        el.innerText = dateObj.toLocaleString('en-IN', {
+                            timeZone: 'Asia/Kolkata',
+                            day: '2-digit',
+                            month: 'short',
+                            hour: '2-digit',
+                            minute: '2-digit',
+                            second: '2-digit',
+                            hour12: true
+                        });
+                    }
+                }
+            });
+        }
+
+        // Run conversion when the page finishes loading
+        window.addEventListener('load', updateToIST);
+    </script>
+</body>
+</html>

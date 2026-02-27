@@ -1,0 +1,59 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>FraudSentry</title>
+    <link rel="stylesheet" href="globals.css" />
+    <link rel="stylesheet" href="style.css" />
+</head>
+<body>
+    <main class="frame scan-mode">
+        
+        <div id="start-view">
+            <div class="logo-container">
+                <img src="fraudsentry-logo.png" alt="FraudSentry Logo" class="logo-img" />
+            </div>
+
+            <button id="startScanBtn" class="scan-button" type="button" aria-label="Start scan">
+                <img class="img" src="rectangle-2.svg" alt="" role="presentation" />
+                <span class="div">SCAN</span>
+            </button>
+        </div>
+
+        <div id="result-view" style="display: none;">
+            <div class="logo-container">
+                <img src="fraudsentry-logo.png" alt="FraudSentry Logo" class="logo-img" />
+            </div>
+
+            <section class="rectangle result-container" role="region" aria-label="Trust Score">
+                <div class="circular-progress" id="progress-circle">
+                    <div class="inner-circle"></div>
+                    <div class="percentage" id="score-text">0%</div>
+                </div>
+            </section>
+
+            <div class="analysis-text-container">
+                <div class="status-box">
+                    <span id="status-value">ANALYZING...</span>
+                </div>
+                <p id="reason-text">Please wait while we check the page content.</p>
+            </div>
+
+            <nav class="button-group" role="navigation">
+                <button id="knowMoreBtn" class="know-more-button" type="button">
+                    <img class="know-more-button-icon" src="know-more-button.svg" alt="" aria-hidden="true" />
+                    <span class="text-wrapper">KNOW MORE</span>
+                </button>
+                
+                <button id="rescanBtn" class="refresh-button" type="button">
+                    <img class="refresh-icon" src="refresh.svg" alt="" aria-hidden="true" />
+                    <span class="div">RESCAN</span>
+                </button>
+            </nav>
+        </div>
+
+    </main>
+    <script src="popup.js"></script>
+</body>
+</html>
