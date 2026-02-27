@@ -19,7 +19,14 @@ DB_PATH = os.path.join(BASE_DIR, "stats.db")
 TOP_LIST_PATH = os.path.join(BASE_DIR, "top-1m.csv")
 
 # =====================================================
-# LOAD TRAFFIC DATA + HIGH VALUE BRANDS
+# CACHES
+# =====================================================
+
+SCAN_CACHE = {}
+AGE_CACHE = {}
+
+# =====================================================
+# LOAD TRAFFIC DATA
 # =====================================================
 
 TOP_DOMAINS = set()
@@ -35,7 +42,6 @@ def load_top_domains():
                     domain = row[1].strip().lower()
                     TOP_DOMAINS.add(domain)
 
-                    # Protect top 1000 brands only
                     if count < 1000:
                         token = domain.split(".")[0]
                         if len(token) >= 3:
@@ -43,7 +49,7 @@ def load_top_domains():
                     count += 1
 
         print(f"[Traffic] Loaded {len(TOP_DOMAINS)} domains")
-        print(f"[Brands] Protected {len(HIGH_VALUE_BRANDS)} high-value brands")
+        print(f"[Brands] Protected {len(HIGH_VALUE_BRANDS)} brands")
 
     except Exception as e:
         print("Traffic load error:", e)
@@ -83,21 +89,27 @@ def save_to_db(url, status, score):
     conn.close()
 
 # =====================================================
-# DOMAIN AGE
+# DOMAIN AGE (CACHED)
 # =====================================================
 
 def get_domain_age_days(domain):
+    if domain in AGE_CACHE:
+        return AGE_CACHE[domain]
+
     try:
         w = whois.whois(domain)
         creation = w.creation_date
         if isinstance(creation, list):
             creation = creation[0]
-        return (datetime.now() - creation).days
+        age = (datetime.now() - creation).days
+        AGE_CACHE[domain] = age
+        return age
     except:
+        AGE_CACHE[domain] = None
         return None
 
 # =====================================================
-# STRUCTURE + ECOSYSTEM DETECTION
+# STRUCTURE DETECTION
 # =====================================================
 
 PIRACY_KEYWORDS = ["repack", "fitgirl", "torrent", "crack", "warez", "patch"]
@@ -117,7 +129,7 @@ def analyze_structure(url):
     return piracy, streaming, risky_tld
 
 # =====================================================
-# STRICT TYPOSQUATTING (Levenshtein)
+# TYPOSQUATTING (STRICT LEVENSHTEIN)
 # =====================================================
 
 def is_typosquatting(domain):
@@ -138,12 +150,18 @@ def is_typosquatting(domain):
     return False, None
 
 # =====================================================
-# ROUTES
+# HELPER: BASE DOMAIN EXTRACTION
 # =====================================================
 
-@app.route('/')
-def home():
-    return "<h2>Fraud-Sentry Backend Running</h2><p><a href='/dashboard'>Open Dashboard</a></p>"
+def get_base_domain(domain):
+    parts = domain.split(".")
+    if len(parts) >= 2:
+        return ".".join(parts[-2:])
+    return domain
+
+# =====================================================
+# ROUTES
+# =====================================================
 
 @app.route('/dashboard')
 def dashboard():
@@ -179,31 +197,37 @@ def check():
     data = request.json
     url = data.get("url")
     text = data.get("text", "")
+    llm_score = data.get("llm_score")
+    llm_category = data.get("llm_category")
 
     if not url:
         return jsonify({"error": "Missing URL"}), 400
 
     parsed = urlparse(url)
     domain = parsed.netloc.lower().replace("www.", "")
+    base_domain = get_base_domain(domain)
 
-    # LLM inference
-    response = requests.post(
-        INFERENCE_URL,
-        json={"url": url, "text": text}
-    )
-
-    result = response.json()
-
-    base_score = result.get("trust_score", 60)
-    risk_category = result.get("risk_category", "unknown")
+    # CACHE RETURN
+    if domain in SCAN_CACHE:
+        return jsonify(SCAN_CACHE[domain])
 
     piracy, streaming, risky_tld = analyze_structure(url)
+    typo_flag, _ = is_typosquatting(domain)
     domain_age = get_domain_age_days(domain)
 
-    typo_flag, matched_brand = is_typosquatting(domain)
+    # =====================================================
+    # REPUTATION FIX (BASE DOMAIN CHECK)
+    # =====================================================
+
+    if domain in TOP_DOMAINS:
+        reputation_score = 100
+    elif base_domain in TOP_DOMAINS:
+        reputation_score = 90
+    else:
+        reputation_score = 50
 
     # =====================================================
-    # STABLE WEIGHTED SCORING
+    # STRUCTURE SCORE
     # =====================================================
 
     structure_score = 100
@@ -215,19 +239,48 @@ def check():
         structure_score -= 25
     structure_score = max(0, structure_score)
 
-    reputation_score = 100 if domain in TOP_DOMAINS else 50
+    # =====================================================
+    # AGE SCORE
+    # =====================================================
 
     if domain_age:
         if domain_age > 1000:
             age_score = 100
         elif domain_age > 365:
-            age_score = 80
+            age_score = 85
         elif domain_age > 90:
-            age_score = 60
+            age_score = 65
         else:
             age_score = 40
     else:
         age_score = 50
+
+    # =====================================================
+    # SMART LLM SKIP LOGIC
+    # =====================================================
+
+    skip_llm = (
+        domain in TOP_DOMAINS
+        or base_domain in TOP_DOMAINS
+        or piracy
+        or streaming
+        or typo_flag
+        or (domain_age and domain_age > 365)
+    )
+
+    base_score = 70
+    risk_category = "unknown"
+
+    if llm_score is not None:
+        base_score = llm_score
+        risk_category = llm_category or "unknown"
+    else:
+        base_score = 70
+        risk_category = "unknown"
+
+    # =====================================================
+    # FINAL SCORE
+    # =====================================================
 
     final_score = int(
         0.4 * base_score +
@@ -239,15 +292,6 @@ def check():
     final_score = max(0, min(100, final_score))
 
     # =====================================================
-    # HIGH REPUTATION SHIELD (Fix LLM Hallucination)
-    # =====================================================
-
-    if domain in TOP_DOMAINS and not piracy and not streaming and not risky_tld:
-        if risk_category in ["malware", "phishing"]:
-            risk_category = "unknown"
-            final_score = max(final_score, 75)
-
-    # =====================================================
     # HARD OVERRIDES
     # =====================================================
 
@@ -255,17 +299,17 @@ def check():
         status = "dangerous"
         final_score = min(final_score, 30)
 
-    elif risk_category in ["phishing", "malware"] and domain not in TOP_DOMAINS:
-        status = "dangerous"
-        final_score = min(final_score, 35)
-
     elif (piracy or streaming) and risky_tld:
         status = "dangerous"
         final_score = min(final_score, 40)
 
     elif piracy or streaming:
-        final_score = min(final_score, 65)
         status = "suspicious"
+        final_score = min(final_score, 65)
+
+    elif risk_category in ["phishing", "malware"] and reputation_score < 90:
+        status = "dangerous"
+        final_score = min(final_score, 35)
 
     else:
         if final_score < 45:
@@ -275,10 +319,13 @@ def check():
         else:
             status = "safe"
 
-    result["trust_score"] = final_score
-    result["status"] = status
-    result["method"] = "final-production-engine"
+    result = {
+        "trust_score": final_score,
+        "status": status,
+        "method": "stable-production-engine"
+    }
 
+    SCAN_CACHE[domain] = result
     save_to_db(url, status, final_score)
 
     return jsonify(result)
