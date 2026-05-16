@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>FraudSentry | Dashboard</title>
+    <title>ScamSentry | Dashboard</title>
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@400;600;800&family=JetBrains+Mono:wght@400;500;600&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
@@ -480,7 +480,7 @@
         <aside class="sidebar">
             <div class="brand">
                 <svg class="brand-mark" viewBox="0 0 24 28" aria-hidden="true"><path d="M12 2 21 5.5v7.1c0 5.8-3.5 10.5-9 13.4-5.5-2.9-9-7.6-9-13.4V5.5L12 2Z" fill="none" stroke="currentColor" stroke-width="1.8"/><path d="M12 8v10M8 13h8" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/></svg>
-                <div class="brand-logo"><span>Fraud</span>Sentry</div>
+                <div class="brand-logo"><span>Scam</span>Sentry</div>
             </div>
             <nav class="sidebar-nav" aria-label="Dashboard views">
                 <button class="nav-item active" type="button" data-view="overview"><svg viewBox="0 0 24 24"><path d="M4 13h7V4H4v9Zm9 7h7V4h-7v16ZM4 20h7v-5H4v5Z" fill="none" stroke="currentColor" stroke-width="1.8"/></svg><span class="nav-label">Overview</span></button>
@@ -526,7 +526,7 @@
                         <article class="panel"><div class="panel-head"><div><h2 class="panel-title">Recent Scans</h2></div><button class="select-btn" type="button" data-view-target="scans">View all scans</button></div><div class="table-scroll"><table class="data-table"><thead><tr><th>URL</th><th>Result</th><th>Score</th><th>Time</th></tr></thead><tbody id="recent-table"></tbody></table></div></article>
                         <article class="panel"><div class="panel-head"><div><h2 class="panel-title">Top Threat Categories</h2><p class="panel-sub">Most common threat types</p></div></div><div class="category-list" id="category-list"></div></article>
                     </div>
-                    <div class="footer-panel"><div><strong>FraudSentry is protecting you</strong><p>Thank you for browsing safely.</p></div><div class="help-links"><a href="#docs">Docs</a><a href="#support">Support</a><a href="#contact">Contact</a></div></div>
+                    <div class="footer-panel"><div><strong>ScamSentry is protecting you</strong><p>Thank you for browsing safely.</p></div><div class="help-links"><a href="#docs">Docs</a><a href="#support">Support</a><a href="#contact">Contact</a></div></div>
                 </section>
 
                 <section class="view" id="view-scans"><div class="view-head"><div><h1 class="view-title">Scans</h1><p class="view-sub">Search, filter, and open scan records</p></div></div><div class="tool-row"><input class="search-input" id="scan-search" placeholder="Search scanned URLs"><button class="action-btn" type="button" id="clear-search">Clear</button></div><article class="panel"><table class="data-table"><thead><tr><th>URL</th><th>Verdict</th><th>Score</th><th>Scanned At</th><th>Action</th></tr></thead><tbody id="scan-table"></tbody></table></article></section>

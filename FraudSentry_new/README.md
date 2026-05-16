@@ -1,26 +1,26 @@
-# 🛡️ FRAUD-SENTRY  
+# 🛡️ SCAM-SENTRY  
 ### Stop scams before you pay.
 
 ---
 
 ## 🧠 Overview
 
-Fraud-Sentry is a browser extension powered by a fully local AI system that detects phishing, scam, and suspicious payment websites in real-time — before users enter sensitive information.
+Scam-Sentry is a browser extension powered by a fully local AI system that detects phishing, scam, and suspicious payment websites in real-time — before users enter sensitive information.
 
-Unlike cloud-based AI solutions, Fraud-Sentry runs a locally deployed Large Language Model (LLM) using the RunAnywhere SDK, ensuring all AI inference happens directly on the client device.
+Unlike cloud-based AI solutions, Scam-Sentry runs a locally deployed Large Language Model (LLM) using the RunAnywhere SDK, ensuring all AI inference happens directly on the client device.
 
 ✔ No cloud APIs  
 ✔ No external AI calls  
 ✔ No data leaves the device  
 ✔ Fully private on-device AI  
 
-Fraud-Sentry combines instant rule-based detection with intelligent local AI reasoning to provide fast, private, and reliable scam protection.
+Scam-Sentry combines instant rule-based detection with intelligent local AI reasoning to provide fast, private, and reliable scam protection.
 
 ---
 
 ## 🏗 Architecture Overview
 
-Fraud-Sentry uses a two-layer detection system:
+Scam-Sentry uses a two-layer detection system:
 
 ### 🥇 Layer 1 — Rule-Based Detection
 Instant checks for:
@@ -72,7 +72,7 @@ All AI processing runs entirely on the client machine.
 Fraud does not exploit technology.  
 It exploits trust.
 
-Most fraud detection systems rely on cloud-based models that require sending user data externally. Fraud-Sentry eliminates that risk by keeping all AI reasoning local.
+Most fraud detection systems rely on cloud-based models that require sending user data externally. Scam-Sentry eliminates that risk by keeping all AI reasoning local.
 
 This ensures:
 
@@ -86,7 +86,7 @@ This ensures:
 
 ## 🎯 Use Cases
 
-Fraud-Sentry protects users when they are:
+Scam-Sentry protects users when they are:
 
 • Shopping on unfamiliar websites  
 • Clicking unknown payment links  
@@ -100,7 +100,7 @@ A warning appears before payment is made.
 
 ## 🚀 Hackathon Context
 
-Fraud-Sentry demonstrates how locally deployed LLMs using RunAnywhere SDK can:
+Scam-Sentry demonstrates how locally deployed LLMs using RunAnywhere SDK can:
 
 • Deliver AI-powered scam detection  
 • Operate without cloud dependency  
