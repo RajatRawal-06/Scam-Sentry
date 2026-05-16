@@ -1,223 +1,488 @@
-/* --- Main Frame Setup --- */
-.frame {
-  background: linear-gradient(129deg, rgba(0, 43, 55, 1) 0%, rgba(0, 104, 133, 1) 100%);
-  width: 360px;
-  position: relative;
+:root {
+  --bg-void: #080c10;
+  --bg-base: #0d1117;
+  --bg-surface: #111820;
+  --bg-elevated: #1a2332;
+  --bg-border: #1e2d3d;
+  --accent-primary: #00e5c3;
+  --accent-glow: rgba(0, 229, 195, 0.15);
+  --accent-dim: #00b39a;
+  --threat-safe: #00e5c3;
+  --threat-suspicious: #f5a623;
+  --threat-dangerous: #e8365d;
+  --threat-unknown: #4a6274;
+  --font-display: "Orbitron", monospace;
+  --font-ui: "JetBrains Mono", monospace;
+  --font-body: "Inter", sans-serif;
+  --space-xs: 4px;
+  --space-sm: 8px;
+  --space-md: 16px;
+  --space-lg: 24px;
+  --space-xl: 40px;
+  --radius-sm: 6px;
+  --radius-md: 12px;
+  --radius-lg: 20px;
+  --radius-pill: 999px;
+}
+
+.fraud-sentry-popup,
+.fraud-sentry-popup * {
+  box-sizing: border-box;
+}
+
+.fraud-sentry-popup {
+  width: 380px;
+  height: 560px;
+  background:
+    radial-gradient(circle at 50% 26%, rgba(0, 229, 195, 0.12), transparent 30%),
+    linear-gradient(180deg, var(--bg-base) 0%, var(--bg-void) 100%);
+  color: #c5d4e0;
   display: flex;
   flex-direction: column;
   overflow: hidden;
-  /* Smooth resize transition */
-  transition: height 0.3s ease; 
+  position: relative;
 }
 
-/* --- DYNAMIC HEIGHT MODES --- */
-.frame.scan-mode {
-  height: 250px;
-}
-
-.frame.result-mode {
-  height: 500px;
-}
-
-/* --- Shared Elements --- */
-.logo-container {
+.fraud-sentry-popup::before {
+  content: "";
   position: absolute;
-  top: 40px;
-  width: 360px;
+  inset: 0;
+  pointer-events: none;
+  background:
+    linear-gradient(rgba(255, 255, 255, 0.025) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(255, 255, 255, 0.018) 1px, transparent 1px);
+  background-size: 24px 24px;
+  mask-image: linear-gradient(to bottom, rgba(0, 0, 0, 0.5), transparent 70%);
+}
+
+.fraud-sentry-popup .popup-header {
+  min-height: 52px;
   display: flex;
-  justify-content: center;
   align-items: center;
-  z-index: 10;
+  justify-content: space-between;
+  padding: var(--space-sm) var(--space-md);
+  background: rgba(17, 24, 32, 0.94);
+  border-bottom: 1px solid var(--bg-border);
+  position: relative;
+  z-index: 1;
 }
 
-.logo-img {
-  max-width: 230px;
-  height: auto;
+.fraud-sentry-popup .brand-lockup {
+  display: inline-flex;
+  align-items: center;
+  gap: 10px;
+  min-width: 0;
 }
 
-/* --- VIEW 1: SCAN UI SPECIFICS --- */
-.scan-button {
-  position: absolute;
-  top: 164px;
-  left: 82px;
-  width: 196px;
-  height: 40px;
-  background: transparent;
-  border: none;
-  padding: 0;
-  cursor: pointer;
-  display: block;
-  transition: transform 0.1s;
+.fraud-sentry-popup .brand-mark {
+  width: 26px;
+  height: 26px;
+  object-fit: contain;
+  filter: drop-shadow(0 0 10px rgba(0, 229, 195, 0.28));
 }
 
-.scan-button:active {
-  transform: scale(0.98);
-}
-
-.scan-button .img {
-  position: absolute;
-  top: 0;
-  left: 0;
-  width: 196px;
-  height: 40px;
-}
-
-.scan-button .div {
-  position: absolute;
-  top: 8px;
-  width: 100%;
-  left: 0;
-  text-align: center;
-  mix-blend-mode: hard-light;
-  font-family: "Roboto-Bold", Helvetica, sans-serif;
-  font-weight: 700;
-  color: #002b37;
-  font-size: 20px;
+.fraud-sentry-popup .brand-logo {
+  font-family: var(--font-display);
+  font-size: 16px;
+  font-weight: 800;
   letter-spacing: 0;
-  line-height: normal;
-  white-space: nowrap;
+  background: linear-gradient(135deg, #00e5c3, #00a8ff);
+  -webkit-background-clip: text;
+  background-clip: text;
+  -webkit-text-fill-color: transparent;
+  text-transform: uppercase;
 }
 
-/* --- VIEW 2: RESULT UI SPECIFICS --- */
+.fraud-sentry-popup .settings-btn {
+  width: 32px;
+  height: 32px;
+  display: inline-grid;
+  place-items: center;
+  border: 1px solid var(--bg-border);
+  border-radius: var(--radius-sm);
+  background: transparent;
+  color: var(--threat-unknown);
+  cursor: pointer;
+  transition: border-color 0.2s, color 0.2s, background 0.2s;
+}
 
-/* The Glass Rectangle */
-.rectangle {
-  position: absolute;
-  top: 140px;
-  left: calc(50% - 151px);
-  width: 302px;
-  height: 120px;
-  
-  border: 1px solid transparent;
-  backdrop-filter: blur(15px) brightness(100%);
-  -webkit-backdrop-filter: blur(15px) brightness(100%);
-  border-image: linear-gradient(105deg, rgba(255, 255, 255, 0) 0%, rgba(255, 255, 255, 0.25) 100%) 1;
-  background: linear-gradient(180deg, rgba(217, 217, 217, 0.2) 0%, rgba(115, 115, 115, 0) 100%);
-  
+.fraud-sentry-popup .settings-btn:hover {
+  border-color: var(--accent-primary);
+  color: var(--accent-primary);
+  background: var(--accent-glow);
+}
+
+.fraud-sentry-popup .popup-view {
+  min-height: 0;
+  flex: 1;
   display: flex;
-  align-items: center;
-  justify-content: center;
+  flex-direction: column;
+  position: relative;
+  z-index: 1;
 }
 
-/* Analysis Text Container */
-.analysis-text-container {
-  position: absolute;
-  top: 280px;
-  width: 100%;
-  padding: 0 30px;
-  text-align: center;
+.fraud-sentry-popup #result-view[style*="display: none"],
+.fraud-sentry-popup #start-view[style*="display: none"] {
+  display: none !important;
+}
+
+.fraud-sentry-popup .score-section {
+  height: 244px;
   display: flex;
   flex-direction: column;
   align-items: center;
-}
-
-/* Components */
-.circular-progress {
-  position: relative;
-  height: 80px;
-  width: 80px;
-  border-radius: 50%;
-  background: conic-gradient(#2ecc71 3.6deg, #333 0deg);
-  display: flex;
-  align-items: center;
   justify-content: center;
-  box-shadow: 0 4px 10px rgba(0,0,0,0.3);
+  padding-top: var(--space-sm);
 }
 
-.circular-progress::before {
-  content: "";
-  position: absolute;
-  height: 64px;
-  width: 64px;
-  border-radius: 50%;
-  background-color: #002b37;
+.fraud-sentry-popup .score-section--idle {
+  height: 236px;
 }
 
-.percentage {
-  position: relative;
-  font-family: "Roboto-Bold", sans-serif;
-  font-size: 18px;
-  font-weight: bold;
-  color: #fff;
-  z-index: 2;
+.fraud-sentry-popup .threat-ring-wrapper {
+  width: 188px;
+  height: 188px;
+  display: grid;
+  place-items: center;
+  filter: drop-shadow(0 16px 34px rgba(0, 0, 0, 0.35));
 }
 
-.status-box {
-  font-family: "Roboto-Bold", sans-serif;
-  font-weight: 800;
-  font-size: 20px;
-  margin-bottom: 10px;
-  letter-spacing: 1.5px;
-  color: #fff;
-  text-shadow: 0 2px 4px rgba(0,0,0,0.3);
+.fraud-sentry-popup .hex-ring {
+  width: 188px;
+  height: 188px;
+  overflow: visible;
 }
 
-/* --- UPDATED REASON TEXT --- */
-#reason-text {
-  font-family: "Roboto", sans-serif;
-  font-size: 13px;
-  line-height: 1.5;
-  color: #e0e0e0;
-  
-  /* Text Truncation Rules */
-  max-width: 280px;         
-  display: -webkit-box;     
-  -webkit-line-clamp: 6;    /* UPDATED: Increased to 6 lines */
-  -webkit-box-orient: vertical;
-  overflow: hidden;         
-  text-overflow: ellipsis;  
+.fraud-sentry-popup .hex-frame {
+  stroke: var(--threat-unknown);
+  opacity: 0.45;
+  transition: stroke 0.25s, opacity 0.25s, stroke-width 0.25s;
 }
 
-/* Bottom Buttons */
-.button-group {
-  position: absolute;
-  bottom: 30px;
-  left: 29px;
-  display: flex;
-  gap: 52px;
+.fraud-sentry-popup .hex-frame--outer {
+  opacity: 0.22;
+}
+
+.fraud-sentry-popup .hex-circuit {
+  stroke: var(--accent-primary);
+  stroke-width: 1;
+  opacity: 0.5;
+  filter: drop-shadow(0 0 10px rgba(0, 229, 195, 0.45));
+}
+
+.fraud-sentry-popup .score-arc {
+  stroke: var(--threat-unknown);
+  transition: stroke-dasharray 0.45s ease, stroke 0.25s, filter 0.25s;
+}
+
+.fraud-sentry-popup .score-arc--idle {
+  stroke: var(--accent-primary);
+  filter: drop-shadow(0 0 14px rgba(0, 229, 195, 0.3));
+}
+
+.fraud-sentry-popup .score-section--idle .hex-frame {
+  stroke: var(--accent-primary);
+}
+
+.fraud-sentry-popup .verdict-badge {
+  display: inline-flex;
   align-items: center;
+  gap: var(--space-xs);
+  min-height: 28px;
+  padding: 6px 16px;
+  border-radius: var(--radius-pill);
+  font-family: var(--font-ui);
+  font-size: 11px;
+  font-weight: 600;
+  letter-spacing: 0;
+  text-transform: uppercase;
 }
 
-.know-more-button, .refresh-button {
-  position: relative;
-  width: 125px;
-  height: 40px;
-  background: transparent;
-  border: none;
-  padding: 0;
-  cursor: pointer;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  transition: opacity 0.2s;
-}
-
-.know-more-button-icon, .refresh-icon {
-  position: absolute;
-  top: 0;
-  left: 0;
-  width: 100%;
-  height: 100%;
-  pointer-events: none;
-}
-
-.know-more-button .text-wrapper, .refresh-button .div {
-  position: relative;
-  z-index: 1;
-  font-family: "Roboto-Bold", Helvetica, sans-serif;
-  font-weight: 700;
+.fraud-sentry-popup .verdict-copy {
+  max-width: 300px;
+  margin-top: 9px;
+  color: #c5d4e0;
+  font-family: var(--font-body);
   font-size: 12px;
-  pointer-events: none;
+  line-height: 1.35;
+  text-align: center;
 }
 
-.know-more-button .text-wrapper {
-  color: #ffffff;
-  mix-blend-mode: overlay;
+.fraud-sentry-popup .verdict-badge[data-level="safe"] {
+  background: rgba(0, 229, 195, 0.12);
+  color: var(--threat-safe);
+  border: 1px solid rgba(0, 229, 195, 0.3);
 }
 
-#rescanBtn .div {
-    color: #002b37; 
-    mix-blend-mode: hard-light;
+.fraud-sentry-popup .verdict-badge[data-level="suspicious"] {
+  background: rgba(245, 166, 35, 0.12);
+  color: var(--threat-suspicious);
+  border: 1px solid rgba(245, 166, 35, 0.3);
 }
 
-.know-more-button:hover, .refresh-button:hover { opacity: 0.9; }
+.fraud-sentry-popup .verdict-badge[data-level="dangerous"],
+.fraud-sentry-popup .verdict-badge[data-level="error"] {
+  background: rgba(232, 54, 93, 0.12);
+  color: var(--threat-dangerous);
+  border: 1px solid rgba(232, 54, 93, 0.3);
+}
+
+.fraud-sentry-popup .verdict-badge[data-level="unknown"] {
+  background: rgba(74, 98, 116, 0.12);
+  color: var(--threat-unknown);
+  border: 1px solid rgba(74, 98, 116, 0.3);
+}
+
+.fraud-sentry-popup .verdict-dot {
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: currentColor;
+}
+
+.fraud-sentry-popup .verdict-badge[data-level="dangerous"] .verdict-dot,
+.fraud-sentry-popup .verdict-badge[data-level="error"] .verdict-dot {
+  animation: dotBlink 1s step-start infinite;
+}
+
+.fraud-sentry-popup .url-strip {
+  min-height: 44px;
+  display: flex;
+  align-items: center;
+  gap: var(--space-sm);
+  padding: 10px var(--space-md);
+  background: rgba(26, 35, 50, 0.88);
+  border-top: 1px solid var(--bg-border);
+  border-bottom: 1px solid var(--bg-border);
+}
+
+.fraud-sentry-popup .url-icon {
+  flex: 0 0 auto;
+  color: var(--accent-primary);
+  opacity: 0.85;
+}
+
+.fraud-sentry-popup .url-text {
+  font-family: var(--font-ui);
+  font-size: 11px;
+  color: var(--threat-unknown);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  max-width: 306px;
+}
+
+.fraud-sentry-popup .signals-panel {
+  flex: 1;
+  min-height: 0;
+  padding: var(--space-md);
+  overflow-y: auto;
+}
+
+.fraud-sentry-popup .signals-header {
+  font-family: var(--font-ui);
+  font-size: 9px;
+  letter-spacing: 0;
+  color: var(--threat-unknown);
+  margin-bottom: var(--space-sm);
+}
+
+.fraud-sentry-popup .signals-list {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.fraud-sentry-popup .signal-item {
+  display: flex;
+  align-items: flex-start;
+  gap: var(--space-sm);
+  padding: 8px 10px;
+  border-radius: var(--radius-sm);
+  font-family: var(--font-body);
+  font-size: 12px;
+  line-height: 1.35;
+  border: 1px solid transparent;
+}
+
+.fraud-sentry-popup .signal-item::after {
+  content: "MED";
+  margin-left: auto;
+  padding: 2px 7px;
+  border: 1px solid currentColor;
+  border-radius: var(--radius-sm);
+  font-family: var(--font-ui);
+  font-size: 9px;
+  font-weight: 700;
+  line-height: 1.2;
+}
+
+.fraud-sentry-popup .signal-danger::after {
+  content: "HIGH";
+}
+
+.fraud-sentry-popup .signal-ok::after {
+  content: "LOW";
+}
+
+.fraud-sentry-popup .signal-ok {
+  background: rgba(0, 229, 195, 0.07);
+  color: #00b39a;
+}
+
+.fraud-sentry-popup .signal-warn {
+  background: rgba(245, 166, 35, 0.07);
+  color: #c98a1e;
+}
+
+.fraud-sentry-popup .signal-danger {
+  background: rgba(232, 54, 93, 0.07);
+  color: #c43060;
+}
+
+.fraud-sentry-popup .signal-unknown {
+  background: rgba(74, 98, 116, 0.11);
+  color: #8093a5;
+}
+
+.fraud-sentry-popup .signal-icon {
+  min-width: 18px;
+  font-family: var(--font-ui);
+  font-size: 9px;
+  font-weight: 700;
+  letter-spacing: 0;
+  margin-top: 2px;
+  flex-shrink: 0;
+  color: currentColor;
+}
+
+.fraud-sentry-popup .signal-msg {
+  min-width: 0;
+}
+
+.fraud-sentry-popup .last-scan-strip {
+  min-height: 38px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--space-md);
+  margin: 0 var(--space-md) var(--space-sm);
+  padding: 10px 14px;
+  border: 1px solid rgba(0, 229, 195, 0.22);
+  border-radius: var(--radius-sm);
+  background: rgba(0, 229, 195, 0.05);
+  color: var(--threat-unknown);
+  font-family: var(--font-ui);
+  font-size: 10px;
+}
+
+.fraud-sentry-popup .last-scan-strip strong {
+  color: #c5d4e0;
+  font-weight: 500;
+}
+
+.fraud-sentry-popup .action-bar {
+  min-height: 64px;
+  display: flex;
+  gap: var(--space-sm);
+  padding: var(--space-md);
+  border-top: 1px solid var(--bg-border);
+  background: rgba(8, 12, 16, 0.72);
+}
+
+.fraud-sentry-popup .btn {
+  flex: 1;
+  min-width: 0;
+  padding: 11px 0;
+  border-radius: var(--radius-md);
+  font-family: var(--font-ui);
+  font-size: 11px;
+  font-weight: 600;
+  letter-spacing: 0;
+  cursor: pointer;
+  border: none;
+  transition: background 0.2s, border-color 0.2s, box-shadow 0.2s, color 0.2s, transform 0.2s;
+}
+
+.fraud-sentry-popup .btn:active {
+  transform: translateY(1px);
+}
+
+.fraud-sentry-popup .btn-primary {
+  background: var(--accent-primary);
+  color: var(--bg-void);
+}
+
+.fraud-sentry-popup .btn-primary:hover {
+  background: #00ffda;
+  box-shadow: 0 0 16px rgba(0, 229, 195, 0.35);
+}
+
+.fraud-sentry-popup .btn-secondary {
+  background: transparent;
+  color: var(--accent-primary);
+  border: 1px solid var(--bg-border);
+}
+
+.fraud-sentry-popup .btn-secondary:hover {
+  border-color: var(--accent-primary);
+  background: var(--accent-glow);
+}
+
+.fraud-sentry-popup .btn:disabled {
+  cursor: progress;
+  opacity: 0.68;
+}
+
+.fraud-sentry-popup .skeleton {
+  background: linear-gradient(90deg, var(--bg-surface) 25%, var(--bg-elevated) 50%, var(--bg-surface) 75%);
+  background-size: 200% 100%;
+  animation: shimmer 1.4s infinite;
+  border-radius: var(--radius-sm);
+  color: transparent;
+}
+
+@keyframes shimmer {
+  0% {
+    background-position: 200% 0;
+  }
+  100% {
+    background-position: -200% 0;
+  }
+}
+
+@keyframes hexPulse {
+  0%,
+  100% {
+    opacity: 0.3;
+    stroke-width: 1.5;
+  }
+  50% {
+    opacity: 0.9;
+    stroke-width: 2.5;
+  }
+}
+
+@keyframes dotBlink {
+  0%,
+  100% {
+    opacity: 1;
+  }
+  50% {
+    opacity: 0.2;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .fraud-sentry-popup *,
+  .fraud-sentry-popup *::before,
+  .fraud-sentry-popup *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    scroll-behavior: auto !important;
+    transition-duration: 0.01ms !important;
+  }
+}
