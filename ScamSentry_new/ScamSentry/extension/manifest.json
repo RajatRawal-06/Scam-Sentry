@@ -1,0 +1,31 @@
+{
+"manifest_version": 3,
+"name": "Scam Sentry",
+"version": "1.0",
+"description": "AI-powered scam and piracy detection extension",
+
+
+"permissions": ["storage", "activeTab", "scripting"],
+
+
+"host_permissions": ["http://localhost:5000/*"],
+
+
+"background": {
+"service_worker": "background.js"
+},
+
+
+"action": {
+"default_popup": "popup.html"
+},
+
+
+"content_scripts": [
+{
+"matches": ["<all_urls>"],
+"js": ["content.js"],
+"css": ["style.css"]
+}
+]
+}

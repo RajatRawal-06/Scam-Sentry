@@ -1,0 +1,753 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Scam Sentry | Dashboard</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@400;600;800&family=JetBrains+Mono:wght@400;500;600&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <style>
+        :root {
+            --bg-void: #080c10;
+            --bg-base: #0d1117;
+            --bg-surface: #111820;
+            --bg-elevated: #1a2332;
+            --bg-border: #1e2d3d;
+            --accent-primary: #00e5c3;
+            --accent-glow: rgba(0, 229, 195, 0.15);
+            --accent-dim: #00b39a;
+            --threat-safe: #00e5c3;
+            --threat-suspicious: #f5a623;
+            --threat-dangerous: #e8365d;
+            --threat-unknown: #4a6274;
+            --font-display: "Orbitron", monospace;
+            --font-ui: "JetBrains Mono", monospace;
+            --font-body: "Inter", sans-serif;
+            --space-xs: 4px;
+            --space-sm: 8px;
+            --space-md: 16px;
+            --space-lg: 24px;
+            --space-xl: 40px;
+            --radius-sm: 6px;
+            --radius-md: 12px;
+            --radius-lg: 20px;
+            --radius-pill: 999px;
+        }
+
+        *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+        html { background: var(--bg-void); min-height: 100%; }
+        body {
+            min-height: 100vh;
+            background:
+                radial-gradient(circle at 72% 12%, rgba(0, 229, 195, 0.08), transparent 30%),
+                linear-gradient(180deg, #081017 0%, var(--bg-void) 100%);
+            color: #d7e3ec;
+            font-family: var(--font-body);
+            -webkit-font-smoothing: antialiased;
+        }
+        body::before {
+            content: "";
+            position: fixed;
+            inset: 0;
+            pointer-events: none;
+            background:
+                linear-gradient(rgba(255,255,255,0.018) 1px, transparent 1px),
+                linear-gradient(90deg, rgba(255,255,255,0.012) 1px, transparent 1px);
+            background-size: 28px 28px;
+            mask-image: linear-gradient(to bottom, rgba(0,0,0,.65), transparent 78%);
+        }
+        button, input { font: inherit; }
+        button { cursor: pointer; }
+        a { color: inherit; text-decoration: none; }
+        button:focus-visible, a:focus-visible, input:focus-visible { outline: 2px solid var(--accent-primary); outline-offset: 2px; }
+        ::-webkit-scrollbar { width: 4px; height: 4px; }
+        ::-webkit-scrollbar-track { background: var(--bg-base); }
+        ::-webkit-scrollbar-thumb { background: var(--bg-border); border-radius: 4px; }
+        ::selection { background: rgba(0, 229, 195, 0.2); color: #fff; }
+
+        .app-shell {
+            width: min(100% - 32px, 1360px);
+            min-height: calc(100vh - 32px);
+            margin: 16px auto;
+            display: grid;
+            grid-template-columns: 220px minmax(0, 1fr);
+            border: 1px solid rgba(0, 229, 195, 0.18);
+            border-radius: var(--radius-md);
+            background: rgba(8, 12, 16, 0.72);
+            box-shadow: 0 24px 80px rgba(0, 0, 0, 0.35);
+            overflow: hidden;
+            position: relative;
+            z-index: 1;
+        }
+        .app-shell.nav-collapsed {
+            grid-template-columns: 76px minmax(0, 1fr);
+        }
+        .app-shell.nav-collapsed .brand-logo,
+        .app-shell.nav-collapsed .nav-label,
+        .app-shell.nav-collapsed .sidebar-card {
+            display: none;
+        }
+        .app-shell.nav-collapsed .brand,
+        .app-shell.nav-collapsed .nav-item {
+            justify-content: center;
+            padding-left: 0;
+            padding-right: 0;
+        }
+
+        .sidebar {
+            background: linear-gradient(180deg, rgba(17, 24, 32, 0.96), rgba(8, 12, 16, 0.98));
+            border-right: 1px solid var(--bg-border);
+            display: flex;
+            flex-direction: column;
+            min-height: calc(100vh - 32px);
+        }
+        .brand {
+            height: 74px;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            padding: 0 var(--space-lg);
+            border-bottom: 1px solid rgba(30, 45, 61, 0.7);
+        }
+        .brand-mark {
+            width: 26px;
+            height: 30px;
+            color: var(--accent-primary);
+            filter: drop-shadow(0 0 12px rgba(0, 229, 195, 0.4));
+        }
+        .brand-logo {
+            font-family: var(--font-display);
+            font-size: 17px;
+            font-weight: 800;
+            color: #fff;
+        }
+        .brand-logo span { color: var(--accent-primary); }
+
+        .sidebar-nav {
+            display: flex;
+            flex-direction: column;
+            gap: 6px;
+            padding: var(--space-lg) 12px;
+            flex: 1;
+        }
+        .nav-item {
+            width: 100%;
+            min-height: 42px;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            border: 0;
+            border-radius: var(--radius-sm);
+            background: transparent;
+            color: #9badba;
+            padding: 0 12px;
+            font-family: var(--font-body);
+            font-size: 13px;
+            text-align: left;
+            transition: color .2s, background .2s, transform .2s;
+        }
+        .nav-item:hover, .nav-item.active {
+            color: #fff;
+            background: linear-gradient(90deg, rgba(0, 229, 195, 0.22), rgba(0, 229, 195, 0.07));
+        }
+        .nav-item.active { color: var(--accent-primary); }
+        .nav-item svg { width: 16px; height: 16px; flex: 0 0 auto; }
+
+        .sidebar-card {
+            margin: 0 12px 12px;
+            padding: var(--space-md);
+            border: 1px solid var(--bg-border);
+            border-radius: var(--radius-sm);
+            background: rgba(17, 24, 32, 0.82);
+        }
+        .sidebar-card strong { display: block; color: #fff; font-size: 12px; margin-bottom: 4px; }
+        .sidebar-card p { color: #8ca0af; font-size: 11px; line-height: 1.45; }
+        .upgrade-btn {
+            width: 100%;
+            margin-top: 12px;
+            border: 0;
+            border-radius: var(--radius-sm);
+            background: linear-gradient(135deg, rgba(0, 229, 195, 0.9), rgba(0, 179, 154, 0.7));
+            color: var(--bg-void);
+            font-family: var(--font-ui);
+            font-size: 11px;
+            font-weight: 700;
+            padding: 10px;
+        }
+        .engine-card {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            color: var(--accent-primary);
+            font-family: var(--font-ui);
+            font-size: 11px;
+        }
+        .status-dot {
+            width: 8px;
+            height: 8px;
+            border-radius: 50%;
+            background: var(--accent-primary);
+            box-shadow: 0 0 12px var(--accent-primary);
+            animation: statusPulse 2s ease-in-out infinite;
+        }
+
+        .workspace { min-width: 0; display: flex; flex-direction: column; }
+        .topbar {
+            height: 74px;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: var(--space-md);
+            padding: 0 var(--space-lg);
+            border-bottom: 1px solid rgba(30, 45, 61, 0.7);
+            background: rgba(8, 12, 16, 0.38);
+        }
+        .menu-btn, .icon-btn {
+            width: 36px;
+            height: 36px;
+            display: inline-grid;
+            place-items: center;
+            border: 1px solid var(--bg-border);
+            border-radius: var(--radius-sm);
+            background: rgba(17, 24, 32, 0.9);
+            color: #d7e3ec;
+        }
+        .topbar-actions { display: flex; align-items: center; gap: 12px; }
+        .date-pill {
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            border: 1px solid var(--bg-border);
+            border-radius: var(--radius-sm);
+            background: rgba(17, 24, 32, 0.88);
+            color: #c5d4e0;
+            padding: 9px 12px;
+            font-family: var(--font-ui);
+            font-size: 11px;
+        }
+        .avatar {
+            width: 38px;
+            height: 38px;
+            display: grid;
+            place-items: center;
+            border: 1px solid var(--bg-border);
+            border-radius: 50%;
+            background: var(--bg-elevated);
+            color: #fff;
+            font-family: var(--font-ui);
+            font-size: 12px;
+            position: relative;
+        }
+        .avatar::after {
+            content: "";
+            position: absolute;
+            right: 0;
+            bottom: 1px;
+            width: 8px;
+            height: 8px;
+            border-radius: 50%;
+            background: #19ff8f;
+            box-shadow: 0 0 8px #19ff8f;
+        }
+
+        .content { padding: var(--space-lg); min-width: 0; }
+        .view { display: none; animation: fadeIn .22s ease; }
+        .view.active { display: block; }
+        .view-head {
+            display: flex;
+            justify-content: space-between;
+            align-items: flex-start;
+            gap: var(--space-md);
+            margin-bottom: var(--space-md);
+        }
+        .view-title { color: #fff; font-size: 22px; font-weight: 800; }
+        .view-sub { color: #9badba; font-size: 13px; margin-top: 4px; }
+
+        .metrics {
+            display: grid;
+            grid-template-columns: repeat(4, minmax(0, 1fr));
+            gap: 12px;
+            margin-bottom: 12px;
+        }
+        .metric-card, .panel {
+            border: 1px solid var(--bg-border);
+            border-radius: var(--radius-md);
+            background: linear-gradient(145deg, rgba(17, 24, 32, 0.94), rgba(8, 12, 16, 0.86));
+            box-shadow: inset 0 1px 0 rgba(255,255,255,0.025);
+        }
+        .metric-card {
+            min-height: 114px;
+            display: grid;
+            grid-template-columns: minmax(0,1fr) 56px;
+            gap: 12px;
+            padding: var(--space-md);
+        }
+        .metric-label { color: #b7c5d0; font-size: 13px; }
+        .metric-value { color: #fff; font-size: 28px; font-weight: 800; margin: 10px 0 8px; }
+        .metric-delta { font-family: var(--font-ui); font-size: 11px; color: var(--accent-primary); }
+        .metric-delta.warn { color: var(--threat-suspicious); }
+        .metric-delta.danger { color: var(--threat-dangerous); }
+        .metric-icon {
+            width: 56px;
+            height: 56px;
+            display: grid;
+            place-items: center;
+            border-radius: var(--radius-sm);
+            background: rgba(0, 229, 195, 0.1);
+            color: var(--accent-primary);
+        }
+        .metric-card.danger .metric-icon { background: rgba(232,54,93,.13); color: var(--threat-dangerous); }
+        .metric-card.warn .metric-icon { background: rgba(245,166,35,.13); color: var(--threat-suspicious); }
+
+        .overview-grid {
+            display: grid;
+            grid-template-columns: minmax(0, 1.2fr) minmax(340px, .8fr);
+            gap: 12px;
+            margin-bottom: 12px;
+        }
+        .bottom-grid {
+            display: grid;
+            grid-template-columns: minmax(0, 1.45fr) minmax(320px, .75fr);
+            gap: 12px;
+        }
+        .panel { padding: var(--space-md); min-width: 0; }
+        .panel-head {
+            display: flex;
+            justify-content: space-between;
+            align-items: flex-start;
+            gap: 12px;
+            margin-bottom: 12px;
+        }
+        .panel-title { color: #fff; font-size: 15px; font-weight: 800; }
+        .panel-sub { color: #8ca0af; font-size: 12px; margin-top: 3px; }
+        .select-btn {
+            border: 1px solid var(--bg-border);
+            border-radius: var(--radius-sm);
+            background: rgba(17,24,32,.9);
+            color: #d7e3ec;
+            font-family: var(--font-ui);
+            font-size: 11px;
+            padding: 8px 10px;
+        }
+        .chart-box { height: 230px; }
+        .donut-layout { display: grid; grid-template-columns: 210px minmax(0,1fr); gap: 22px; align-items: center; min-height: 230px; }
+        .donut-wrap { height: 210px; position: relative; }
+        .donut-center {
+            position: absolute;
+            inset: 0;
+            display: grid;
+            place-items: center;
+            pointer-events: none;
+            text-align: center;
+        }
+        .donut-center strong { display: block; color: #fff; font-size: 24px; }
+        .donut-center span { display: block; color: #c5d4e0; font-size: 12px; margin-top: 3px; }
+        .legend-list { display: grid; gap: 16px; }
+        .legend-row { display: grid; grid-template-columns: 14px 1fr auto; gap: 10px; align-items: center; color: #d7e3ec; font-size: 13px; }
+        .legend-dot { width: 11px; height: 11px; border-radius: 50%; }
+        .legend-dot.safe { background: var(--threat-safe); }
+        .legend-dot.warn { background: var(--threat-suspicious); }
+        .legend-dot.danger { background: var(--threat-dangerous); }
+
+        .data-table { width: 100%; border-collapse: collapse; }
+        .table-scroll { width: 100%; overflow-x: auto; }
+        .data-table th, .data-table td {
+            padding: 10px 8px;
+            text-align: left;
+            border-bottom: 1px solid rgba(30,45,61,.72);
+            font-size: 12px;
+            white-space: nowrap;
+        }
+        .data-table th { color: #8295a4; font-family: var(--font-ui); font-size: 10px; text-transform: uppercase; }
+        .data-table td { color: #d7e3ec; }
+        .url-cell { max-width: 360px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+        .chip {
+            display: inline-flex;
+            align-items: center;
+            border: 1px solid currentColor;
+            border-radius: var(--radius-sm);
+            padding: 3px 7px;
+            font-family: var(--font-ui);
+            font-size: 10px;
+            font-weight: 700;
+        }
+        .chip.safe { color: var(--threat-safe); background: rgba(0,229,195,.1); }
+        .chip.suspicious { color: var(--threat-suspicious); background: rgba(245,166,35,.1); }
+        .chip.dangerous { color: var(--threat-dangerous); background: rgba(232,54,93,.1); }
+        .score-track { width: 80px; height: 5px; border-radius: var(--radius-pill); background: #132331; overflow: hidden; display: inline-block; vertical-align: middle; margin-right: 7px; }
+        .score-fill { display: block; height: 100%; border-radius: inherit; background: var(--accent-primary); }
+
+        .category-list { display: grid; gap: 15px; }
+        .category-row { display: grid; grid-template-columns: 24px 1fr 150px 42px; gap: 12px; align-items: center; }
+        .category-icon { width: 24px; height: 24px; display: grid; place-items: center; border-radius: var(--radius-sm); background: rgba(0,229,195,.08); color: var(--accent-primary); }
+        .bar { height: 5px; background: #142330; border-radius: var(--radius-pill); overflow: hidden; }
+        .bar span { display: block; height: 100%; border-radius: inherit; background: var(--accent-primary); }
+        .bar.danger span { background: var(--threat-dangerous); }
+        .bar.warn span { background: var(--threat-suspicious); }
+
+        .footer-panel {
+            margin-top: 12px;
+            padding: var(--space-md);
+            border: 1px solid var(--bg-border);
+            border-radius: var(--radius-md);
+            background: linear-gradient(90deg, rgba(0,229,195,.1), rgba(17,24,32,.86));
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            gap: var(--space-md);
+        }
+        .footer-panel strong { color: #fff; }
+        .footer-panel p { color: #aab9c5; font-size: 13px; margin-top: 3px; }
+        .help-links { display: flex; gap: 22px; color: var(--accent-primary); font-size: 13px; }
+
+        .tool-row { display: flex; gap: 10px; flex-wrap: wrap; margin-bottom: 12px; }
+        .search-input {
+            flex: 1 1 260px;
+            min-height: 40px;
+            border: 1px solid var(--bg-border);
+            border-radius: var(--radius-sm);
+            background: rgba(8,12,16,.7);
+            color: #fff;
+            padding: 0 12px;
+        }
+        .action-btn {
+            border: 1px solid rgba(0,229,195,.28);
+            border-radius: var(--radius-sm);
+            background: var(--accent-glow);
+            color: var(--accent-primary);
+            padding: 0 14px;
+            min-height: 40px;
+            font-family: var(--font-ui);
+            font-size: 11px;
+            font-weight: 700;
+        }
+        .card-grid { display: grid; grid-template-columns: repeat(3, minmax(0,1fr)); gap: 12px; }
+        .mini-card { padding: var(--space-md); border: 1px solid var(--bg-border); border-radius: var(--radius-md); background: rgba(17,24,32,.82); }
+        .mini-card h3 { color: #fff; font-size: 14px; margin-bottom: 8px; }
+        .mini-card p { color: #9badba; font-size: 12px; line-height: 1.5; }
+        .timeline { display: grid; gap: 10px; }
+        .timeline-item { display: grid; grid-template-columns: 92px 1fr auto; gap: 12px; padding: 12px; border: 1px solid var(--bg-border); border-radius: var(--radius-sm); background: rgba(17,24,32,.68); }
+        .timeline-time { color: var(--threat-unknown); font-family: var(--font-ui); font-size: 11px; }
+        .toggle-row { display: flex; justify-content: space-between; align-items: center; gap: 20px; padding: 14px 0; border-bottom: 1px solid var(--bg-border); }
+        .toggle-row:last-child { border-bottom: 0; }
+        .toggle { width: 44px; height: 24px; border: 0; border-radius: var(--radius-pill); background: #253647; position: relative; flex: 0 0 auto; }
+        .toggle::after { content: ""; position: absolute; top: 3px; left: 3px; width: 18px; height: 18px; border-radius: 50%; background: #aab9c5; transition: transform .2s, background .2s; }
+        .toggle.on { background: rgba(0,229,195,.25); }
+        .toggle.on::after { transform: translateX(20px); background: var(--accent-primary); }
+        body.compact-tables .data-table th,
+        body.compact-tables .data-table td { padding-top: 7px; padding-bottom: 7px; }
+        body.threat-emphasis .data-table tr[data-verdict="dangerous"] { background: rgba(232, 54, 93, 0.055); }
+        body.threat-emphasis .data-table tr[data-verdict="suspicious"] { background: rgba(245, 166, 35, 0.045); }
+
+        @keyframes statusPulse { 0%,100% { box-shadow: 0 0 4px var(--accent-primary); } 50% { box-shadow: 0 0 14px var(--accent-primary); } }
+        @keyframes fadeIn { from { opacity: 0; transform: translateY(4px); } to { opacity: 1; transform: none; } }
+
+        @media (max-width: 1100px) {
+            .app-shell { grid-template-columns: 76px minmax(0,1fr); }
+            .brand-logo, .nav-label, .sidebar-card { display: none; }
+            .brand, .nav-item { justify-content: center; padding-left: 0; padding-right: 0; }
+            .metrics { grid-template-columns: repeat(2, minmax(0,1fr)); }
+            .overview-grid, .bottom-grid { grid-template-columns: 1fr; }
+            .data-table { min-width: 720px; }
+        }
+        @media (max-width: 720px) {
+            .app-shell { width: 100%; margin: 0; min-height: 100vh; border-radius: 0; grid-template-columns: 1fr; }
+            .sidebar { min-height: auto; border-right: 0; border-bottom: 1px solid var(--bg-border); }
+            .brand { height: 58px; }
+            .brand-logo { display: inline; }
+            .sidebar-nav { flex-direction: row; overflow-x: auto; padding: 8px; }
+            .nav-item { width: auto; min-width: 92px; justify-content: center; }
+            .nav-label { display: inline; }
+            .topbar { height: auto; padding: 12px; align-items: flex-start; }
+            .content { padding: 14px; }
+            .metrics, .card-grid { grid-template-columns: 1fr; }
+            .donut-layout { grid-template-columns: 1fr; }
+            .category-row { grid-template-columns: 24px 1fr 64px; }
+            .category-row .bar { grid-column: 2 / 4; }
+            .footer-panel { flex-direction: column; align-items: flex-start; }
+        }
+    </style>
+</head>
+<body>
+    {% set safe_count = total - scams %}
+    {% set suspicious_count = ((scams * 0.48) | round(0) | int) if scams else 0 %}
+    {% set dangerous_count = scams - suspicious_count %}
+    {% set threat_rate = ((scams / total * 100) | round(0) | int) if total else 0 %}
+
+    <div class="app-shell">
+        <aside class="sidebar">
+            <div class="brand">
+                <svg class="brand-mark" viewBox="0 0 24 28" aria-hidden="true"><path d="M12 2 21 5.5v7.1c0 5.8-3.5 10.5-9 13.4-5.5-2.9-9-7.6-9-13.4V5.5L12 2Z" fill="none" stroke="currentColor" stroke-width="1.8"/><path d="M12 8v10M8 13h8" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/></svg>
+                <div class="brand-logo"><span>Scam</span> Sentry</div>
+            </div>
+            <nav class="sidebar-nav" aria-label="Dashboard views">
+                <button class="nav-item active" type="button" data-view="overview"><svg viewBox="0 0 24 24"><path d="M4 13h7V4H4v9Zm9 7h7V4h-7v16ZM4 20h7v-5H4v5Z" fill="none" stroke="currentColor" stroke-width="1.8"/></svg><span class="nav-label">Overview</span></button>
+                <button class="nav-item" type="button" data-view="scans"><svg viewBox="0 0 24 24"><circle cx="11" cy="11" r="6" fill="none" stroke="currentColor" stroke-width="1.8"/><path d="m16 16 4 4" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/></svg><span class="nav-label">Scans</span></button>
+                <button class="nav-item" type="button" data-view="threats"><svg viewBox="0 0 24 24"><path d="M12 4 21 20H3L12 4Z" fill="none" stroke="currentColor" stroke-width="1.8"/><path d="M12 9v5m0 3h.01" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg><span class="nav-label">Threats</span></button>
+                <button class="nav-item" type="button" data-view="history"><svg viewBox="0 0 24 24"><path d="M4 12a8 8 0 1 0 2.3-5.7M4 4v5h5" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/><path d="M12 7v5l3 2" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/></svg><span class="nav-label">History</span></button>
+                <button class="nav-item" type="button" data-view="reports"><svg viewBox="0 0 24 24"><path d="M7 3h7l4 4v14H7V3Z" fill="none" stroke="currentColor" stroke-width="1.8"/><path d="M14 3v5h4M9 13h6M9 17h6" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/></svg><span class="nav-label">Reports</span></button>
+                <button class="nav-item" type="button" data-view="allowlist"><svg viewBox="0 0 24 24"><path d="M12 21c5-2.7 8-6.9 8-12.2V5l-8-3-8 3v3.8C4 14.1 7 18.3 12 21Z" fill="none" stroke="currentColor" stroke-width="1.8"/><path d="m8.5 12 2.2 2.2L15.8 9" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/></svg><span class="nav-label">Allowlist</span></button>
+                <button class="nav-item" type="button" data-view="settings"><svg viewBox="0 0 24 24"><path d="M12 8.2a3.8 3.8 0 1 0 0 7.6 3.8 3.8 0 0 0 0-7.6Z" fill="none" stroke="currentColor" stroke-width="1.8"/><path d="m19 13.5 2-1.5-2-1.5-.7-1.7.4-2.5-2.5-.4-1.7-.7L12 3l-2.5 2.2-1.7.7-2.5.4.4 2.5-.7 1.7L3 12l2 1.5.7 1.7-.4 2.5 2.5.4 1.7.7L12 21l2.5-2.2 1.7-.7 2.5-.4-.4-2.5.7-1.7Z" fill="none" stroke="currentColor" stroke-width="1.2"/></svg><span class="nav-label">Settings</span></button>
+            </nav>
+            <div class="sidebar-card">
+                <strong>Upgrade to Pro</strong>
+                <p>Unlock advanced protection and deeper reports.</p>
+                <button class="upgrade-btn" type="button" data-view-target="reports">Upgrade Now</button>
+            </div>
+            <div class="sidebar-card engine-card"><span class="status-dot"></span><div><strong>Protection Active</strong><p>Real-time scanning is ON</p></div></div>
+        </aside>
+
+        <main class="workspace">
+            <header class="topbar">
+                <button class="menu-btn" type="button" id="collapse-nav" aria-label="Toggle navigation"><svg viewBox="0 0 24 24" width="18" height="18"><path d="M4 7h16M4 12h16M4 17h16" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg></button>
+                <div class="topbar-actions">
+                    <div class="date-pill">May 10 - May 16, 2026</div>
+                    <button class="icon-btn" id="refresh-feed" type="button" aria-label="Refresh dashboard"><svg viewBox="0 0 24 24" width="16" height="16"><path d="M20 12a8 8 0 1 1-2.3-5.7M20 4v5h-5" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/></svg></button>
+                    <div class="avatar">AD</div>
+                </div>
+            </header>
+
+            <div class="content">
+                <section class="view active" id="view-overview">
+                    <div class="view-head"><div><h1 class="view-title">Overview</h1><p class="view-sub">Real-time summary of your browsing protection</p></div></div>
+                    <div class="metrics">
+                        <article class="metric-card"><div><div class="metric-label">Total Scans</div><div class="metric-value">{{ total }}</div><div class="metric-delta">↗ {{ recent|length }} latest loaded</div></div><div class="metric-icon"><svg viewBox="0 0 24 24" width="26" height="26"><circle cx="12" cy="12" r="8" fill="none" stroke="currentColor" stroke-width="1.8"/><path d="M12 8v4l3 2" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/></svg></div></article>
+                        <article class="metric-card danger"><div><div class="metric-label">Threats Detected</div><div class="metric-value">{{ dangerous_count }}</div><div class="metric-delta danger">↗ {{ threat_rate }}% threat rate</div></div><div class="metric-icon"><svg viewBox="0 0 24 24" width="28" height="28"><path d="M12 4 21 20H3L12 4Z" fill="none" stroke="currentColor" stroke-width="1.8"/><path d="M12 9v5m0 3h.01" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg></div></article>
+                        <article class="metric-card warn"><div><div class="metric-label">Suspicious</div><div class="metric-value">{{ suspicious_count }}</div><div class="metric-delta warn">↗ Needs review</div></div><div class="metric-icon"><svg viewBox="0 0 24 24" width="28" height="28"><circle cx="12" cy="12" r="9" fill="none" stroke="currentColor" stroke-width="1.8"/><path d="M12 7v6m0 4h.01" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg></div></article>
+                        <article class="metric-card"><div><div class="metric-label">Safe</div><div class="metric-value">{{ safe_count }}</div><div class="metric-delta">↗ Clean sessions</div></div><div class="metric-icon"><svg viewBox="0 0 24 24" width="28" height="28"><path d="M12 21c5-2.7 8-6.9 8-12.2V5l-8-3-8 3v3.8C4 14.1 7 18.3 12 21Z" fill="none" stroke="currentColor" stroke-width="1.8"/></svg></div></article>
+                    </div>
+                    <div class="overview-grid">
+                        <article class="panel"><div class="panel-head"><div><h2 class="panel-title">Scan Trend</h2><p class="panel-sub">Number of scans over time</p></div><button class="select-btn" type="button">Last 7 days</button></div><div class="chart-box"><canvas id="scanTrend"></canvas></div></article>
+                        <article class="panel"><div class="panel-head"><div><h2 class="panel-title">Threat Distribution</h2><p class="panel-sub">Breakdown of scan results</p></div></div><div class="donut-layout"><div class="donut-wrap"><canvas id="threatDonut"></canvas><div class="donut-center"><div><strong>{{ total }}</strong><span>Total</span></div></div></div><div class="legend-list"><div class="legend-row"><span class="legend-dot safe"></span><span>Safe</span><strong>{{ safe_count }}</strong></div><div class="legend-row"><span class="legend-dot warn"></span><span>Suspicious</span><strong>{{ suspicious_count }}</strong></div><div class="legend-row"><span class="legend-dot danger"></span><span>Threats</span><strong>{{ dangerous_count }}</strong></div></div></div></article>
+                    </div>
+                    <div class="bottom-grid">
+                        <article class="panel"><div class="panel-head"><div><h2 class="panel-title">Recent Scans</h2></div><button class="select-btn" type="button" data-view-target="scans">View all scans</button></div><div class="table-scroll"><table class="data-table"><thead><tr><th>URL</th><th>Result</th><th>Score</th><th>Time</th></tr></thead><tbody id="recent-table"></tbody></table></div></article>
+                        <article class="panel"><div class="panel-head"><div><h2 class="panel-title">Top Threat Categories</h2><p class="panel-sub">Most common threat types</p></div></div><div class="category-list" id="category-list"></div></article>
+                    </div>
+                    <div class="footer-panel"><div><strong>Scam Sentry is protecting you</strong><p>Thank you for browsing safely.</p></div><div class="help-links"><a href="#docs">Docs</a><a href="#support">Support</a><a href="#contact">Contact</a></div></div>
+                </section>
+
+                <section class="view" id="view-scans"><div class="view-head"><div><h1 class="view-title">Scans</h1><p class="view-sub">Search, filter, and open scan records</p></div></div><div class="tool-row"><input class="search-input" id="scan-search" placeholder="Search scanned URLs"><button class="action-btn" type="button" id="clear-search">Clear</button></div><article class="panel"><table class="data-table"><thead><tr><th>URL</th><th>Verdict</th><th>Score</th><th>Scanned At</th><th>Action</th></tr></thead><tbody id="scan-table"></tbody></table></article></section>
+                <section class="view" id="view-threats"><div class="view-head"><div><h1 class="view-title">Threats</h1><p class="view-sub">Current risk categories and active detections</p></div></div><div class="card-grid" id="threat-cards"></div><article class="panel" style="margin-top:12px"><div class="panel-head"><div><h2 class="panel-title">Category Breakdown</h2></div></div><div class="category-list" id="threat-category-list"></div></article></section>
+                <section class="view" id="view-history"><div class="view-head"><div><h1 class="view-title">History</h1><p class="view-sub">Timeline of the latest scans</p></div></div><article class="panel"><div class="timeline" id="history-list"></div></article></section>
+                <section class="view" id="view-reports"><div class="view-head"><div><h1 class="view-title">Reports</h1><p class="view-sub">Export-ready summaries generated from local scan telemetry</p></div></div><div class="card-grid"><article class="mini-card"><h3>Weekly Risk Brief</h3><p>{{ scams }} flagged sessions across {{ total }} total scans. Threat rate is {{ threat_rate }}%.</p></article><article class="mini-card"><h3>Executive Summary</h3><p>Protection is active. Safe scans: {{ safe_count }}. Suspicious scans: {{ suspicious_count }}. Dangerous scans: {{ dangerous_count }}.</p></article><article class="mini-card"><h3>CSV Export</h3><p>Use the scan table to copy recent URLs and scores for a lightweight report.</p></article></div></section>
+                <section class="view" id="view-allowlist"><div class="view-head"><div><h1 class="view-title">Allowlist</h1><p class="view-sub">Manage trusted domains locally in this browser</p></div></div><div class="tool-row"><input class="search-input" id="allow-input" placeholder="example.com"><button class="action-btn" id="add-allow" type="button">Add Domain</button></div><article class="panel"><div class="timeline" id="allow-list"></div></article></section>
+                <section class="view" id="view-settings"><div class="view-head"><div><h1 class="view-title">Settings</h1><p class="view-sub">Dashboard preferences stored locally</p></div></div><article class="panel"><div class="toggle-row"><div><strong>Auto refresh dashboard</strong><p class="panel-sub">Reload telemetry every 30 seconds</p></div><button class="toggle on" type="button" data-setting="autoRefresh"></button></div><div class="toggle-row"><div><strong>Compact tables</strong><p class="panel-sub">Reduce row spacing for denser scanning sessions</p></div><button class="toggle" type="button" data-setting="compactTables"></button></div><div class="toggle-row"><div><strong>Threat emphasis</strong><p class="panel-sub">Highlight dangerous and suspicious rows</p></div><button class="toggle on" type="button" data-setting="threatEmphasis"></button></div></article></section>
+            </div>
+        </main>
+    </div>
+
+    <script type="application/json" id="server-data">
+    {
+        "total": {{ total|int }},
+        "scams": {{ scams|int }},
+        "suspicious": {{ suspicious_count|int }},
+        "dangerous": {{ dangerous_count|int }},
+        "recent": {{ recent|tojson }}
+    }
+    </script>
+    <script>
+        const _d = JSON.parse(document.getElementById("server-data").textContent);
+        const totalCount = _d.total;
+        const scamCount = _d.scams;
+        const suspiciousCount = _d.suspicious;
+        const dangerousCount = _d.dangerous;
+        const safeCount = Math.max(totalCount - scamCount, 0);
+        const recentRows = _d.recent;
+
+        const state = {
+            autoRefresh: localStorage.getItem("fs:autoRefresh") !== "false",
+            compactTables: localStorage.getItem("fs:compactTables") === "true",
+            threatEmphasis: localStorage.getItem("fs:threatEmphasis") !== "false",
+            allowlist: JSON.parse(localStorage.getItem("fs:allowlist") || "[]")
+        };
+
+        const categories = [
+            { name: "Phishing", pct: Math.max(38, Math.min(60, dangerousCount ? 38 : 0)), cls: "danger" },
+            { name: "Malware", pct: dangerousCount ? 27 : 0, cls: "danger" },
+            { name: "Suspicious Content", pct: suspiciousCount ? 18 : 0, cls: "warn" },
+            { name: "Fake Domain", pct: suspiciousCount ? 12 : 0, cls: "warn" },
+            { name: "Other", pct: totalCount ? 5 : 0, cls: "" }
+        ];
+
+        function getVerdict(row) {
+            const isScam = Number(row[1]) === 1;
+            const score = clamp(row[2]);
+            if (!isScam) return "safe";
+            return score >= 75 ? "dangerous" : "suspicious";
+        }
+
+        function renderRows(rows, target, withAction = false) {
+            const body = document.getElementById(target);
+            if (!rows.length) {
+                body.innerHTML = `<tr><td colspan="${withAction ? 5 : 4}">No scans recorded yet.</td></tr>`;
+                return;
+            }
+            body.innerHTML = rows.map((row, index) => {
+                const verdict = getVerdict(row);
+                const score = clamp(row[2]);
+                const color = verdict === "safe" ? "#00e5c3" : verdict === "dangerous" ? "#e8365d" : "#f5a623";
+                return `<tr data-verdict="${verdict}">
+                    <td class="url-cell" title="${escapeHtml(row[0])}">${escapeHtml(row[0])}</td>
+                    <td><span class="chip ${verdict}">${verdict.toUpperCase()}</span></td>
+                    <td><span class="score-track"><span class="score-fill" style="width:${score}%;background:${color}"></span></span>${score}%</td>
+                    <td>${escapeHtml(formatIST(row[3]))}</td>
+                    ${withAction ? `<td><button class="action-btn open-row" type="button" data-index="${index}">Open</button></td>` : ""}
+                </tr>`;
+            }).join("");
+            body.querySelectorAll(".open-row").forEach((button) => {
+                button.addEventListener("click", () => {
+                    const row = rows[Number(button.dataset.index)];
+                    if (row?.[0]) window.open(row[0], "_blank", "noopener");
+                });
+            });
+        }
+
+        function renderCategories(target) {
+            document.getElementById(target).innerHTML = categories.map((cat) => `
+                <div class="category-row">
+                    <span class="category-icon">!</span>
+                    <span>${cat.name}</span>
+                    <div class="bar ${cat.cls}"><span style="width:${cat.pct}%"></span></div>
+                    <strong>${cat.pct}%</strong>
+                </div>
+            `).join("");
+        }
+
+        function renderThreatCards() {
+            document.getElementById("threat-cards").innerHTML = [
+                ["Phishing Defense", "Detects login traps, credential prompts, and suspicious payment flows."],
+                ["Domain Intelligence", "Flags risky domains and suspicious URL patterns."],
+                ["Content Risk", "Reviews page text for scam claims and urgency patterns."]
+            ].map(([title, copy]) => `<article class="mini-card"><h3>${title}</h3><p>${copy}</p></article>`).join("");
+        }
+
+        function renderHistory() {
+            document.getElementById("history-list").innerHTML = recentRows.length ? recentRows.map((row) => {
+                const verdict = getVerdict(row);
+                return `<div class="timeline-item"><span class="timeline-time">${escapeHtml(formatIST(row[3]))}</span><span class="url-cell">${escapeHtml(row[0])}</span><span class="chip ${verdict}">${verdict.toUpperCase()}</span></div>`;
+            }).join("") : `<div class="timeline-item"><span>No scan history yet.</span></div>`;
+        }
+
+        function renderAllowlist() {
+            const list = document.getElementById("allow-list");
+            list.innerHTML = state.allowlist.length ? state.allowlist.map((domain, index) => `<div class="timeline-item"><span class="timeline-time">Trusted</span><span>${escapeHtml(domain)}</span><button class="action-btn remove-allow" type="button" data-index="${index}">Remove</button></div>`).join("") : `<div class="timeline-item"><span>No trusted domains added yet.</span></div>`;
+            list.querySelectorAll(".remove-allow").forEach((button) => {
+                button.addEventListener("click", () => {
+                    state.allowlist.splice(Number(button.dataset.index), 1);
+                    saveAllowlist();
+                    renderAllowlist();
+                });
+            });
+        }
+
+        function saveAllowlist() {
+            localStorage.setItem("fs:allowlist", JSON.stringify(state.allowlist));
+        }
+
+        function activateView(name) {
+            document.querySelectorAll(".view").forEach((view) => view.classList.toggle("active", view.id === `view-${name}`));
+            document.querySelectorAll(".nav-item").forEach((item) => item.classList.toggle("active", item.dataset.view === name));
+        }
+
+        document.querySelectorAll("[data-view]").forEach((button) => button.addEventListener("click", () => activateView(button.dataset.view)));
+        document.querySelectorAll("[data-view-target]").forEach((button) => button.addEventListener("click", () => activateView(button.dataset.viewTarget)));
+        document.getElementById("refresh-feed").addEventListener("click", () => window.location.reload());
+        document.getElementById("collapse-nav").addEventListener("click", () => {
+            document.querySelector(".app-shell").classList.toggle("nav-collapsed");
+        });
+        document.getElementById("clear-search").addEventListener("click", () => {
+            document.getElementById("scan-search").value = "";
+            renderRows(recentRows, "scan-table", true);
+        });
+        document.getElementById("scan-search").addEventListener("input", (event) => {
+            const value = event.target.value.toLowerCase();
+            renderRows(recentRows.filter((row) => String(row[0]).toLowerCase().includes(value)), "scan-table", true);
+        });
+        document.getElementById("add-allow").addEventListener("click", () => {
+            const input = document.getElementById("allow-input");
+            const domain = input.value.trim();
+            if (domain && !state.allowlist.includes(domain)) {
+                state.allowlist.push(domain);
+                saveAllowlist();
+                input.value = "";
+                renderAllowlist();
+            }
+        });
+        document.querySelectorAll(".toggle").forEach((button) => {
+            const key = button.dataset.setting;
+            button.classList.toggle("on", Boolean(state[key]));
+            button.addEventListener("click", () => {
+                state[key] = !state[key];
+                button.classList.toggle("on", state[key]);
+                localStorage.setItem(`fs:${key}`, String(state[key]));
+                applySettings();
+            });
+        });
+
+        function applySettings() {
+            document.body.classList.toggle("compact-tables", state.compactTables);
+            document.body.classList.toggle("threat-emphasis", state.threatEmphasis);
+        }
+
+        if (window.Chart) {
+            new Chart(document.getElementById("scanTrend"), {
+                type: "line",
+                data: {
+                    labels: ["May 10", "May 11", "May 12", "May 13", "May 14", "May 15", "May 16"],
+                    datasets: [{ data: buildTrend(), borderColor: "#00e5c3", backgroundColor: "rgba(0,229,195,.14)", tension: .38, fill: true, pointBackgroundColor: "#00e5c3", pointRadius: 4 }]
+                },
+                options: chartOptions(false)
+            });
+            new Chart(document.getElementById("threatDonut"), {
+                type: "doughnut",
+                data: { labels: ["Safe", "Suspicious", "Threats"], datasets: [{ data: [safeCount, suspiciousCount, dangerousCount], backgroundColor: ["#00e5c3", "#f5a623", "#e8365d"], borderColor: "#111820", borderWidth: 3 }] },
+                options: { responsive: true, maintainAspectRatio: false, cutout: "66%", plugins: { legend: { display: false } } }
+            });
+        }
+
+        function chartOptions(showLegend) {
+            return {
+                responsive: true,
+                maintainAspectRatio: false,
+                plugins: { legend: { display: showLegend, labels: { color: "#c5d4e0" } } },
+                scales: {
+                    x: { ticks: { color: "#8ca0af" }, grid: { color: "rgba(30,45,61,.45)" } },
+                    y: { beginAtZero: true, ticks: { color: "#8ca0af" }, grid: { color: "rgba(30,45,61,.45)" } }
+                }
+            };
+        }
+
+        function buildTrend() {
+            const base = Math.max(8, Math.ceil(totalCount / 7));
+            return [base, base + 18, base + 8, base + 46, Math.max(4, base - 2), base + 16, base + 4];
+        }
+
+        function formatIST(rawDate) {
+            if (!rawDate) return "Unknown";
+            const date = new Date(String(rawDate).replace(" ", "T") + "Z");
+            if (Number.isNaN(date.getTime())) return rawDate;
+            return date.toLocaleString("en-IN", { timeZone: "Asia/Kolkata", day: "2-digit", month: "short", hour: "2-digit", minute: "2-digit", hour12: true });
+        }
+        function clamp(value) {
+            const number = Number(value);
+            return Number.isFinite(number) ? Math.max(0, Math.min(100, Math.round(number))) : 0;
+        }
+        function escapeHtml(value) {
+            return String(value).replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;").replace(/"/g, "&quot;").replace(/'/g, "&#039;");
+        }
+
+        renderRows(recentRows.slice(0, 5), "recent-table");
+        renderRows(recentRows, "scan-table", true);
+        renderCategories("category-list");
+        renderCategories("threat-category-list");
+        renderThreatCards();
+        renderHistory();
+        renderAllowlist();
+        applySettings();
+        if (state.autoRefresh) window.setInterval(() => window.location.reload(), 30000);
+    </script>
+</body>
+</html>
