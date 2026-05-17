@@ -4,9 +4,7 @@
 
 Scam Sentry is a privacy-first browser extension that detects phishing, scam, and suspicious websites in real-time — all powered by a locally deployed AI model. No cloud APIs. No data leaves your device. Everything runs right on your machine.
 
-<p align="center">
-  <img src="assets/dashboard_overview.png" alt="Scam Sentry Dashboard Overview" width="900"/>
-</p>
+![Scam Sentry Dashboard Overview](assets/dashboard_overview.png)
 
 <br/>
 
@@ -33,25 +31,19 @@ Scam Sentry takes a different approach. It combines **instant rule-based detecti
 
 When you open the Scam Sentry extension, you see the scan-ready state with the current tab's URL displayed. Hit **SCAN** to analyze the page.
 
-<p align="center">
-  <img src="assets/popup_armed.png" alt="Scam Sentry Popup - Armed State" width="380"/>
-</p>
+![Scam Sentry Popup - Armed State](assets/popup_armed.png)
 
 ### Dashboard Overview
 
 The dashboard gives you a bird's eye view of all your scan activity — total scans, threats detected, suspicious sites, and safe sessions. The scan trend chart shows your activity over the past week, and the donut chart breaks down the threat distribution at a glance.
 
-<p align="center">
-  <img src="assets/dashboard_overview.png" alt="Dashboard Overview with metrics and charts" width="900"/>
-</p>
+![Dashboard Overview with metrics and charts](assets/dashboard_overview.png)
 
 ### Recent Scans & Threat Categories
 
 Scroll down to see your most recent scans with URLs, verdicts (Safe, Suspicious, Dangerous), trust scores, and timestamps. The threat categories panel shows the most common threat types the engine has flagged.
 
-<p align="center">
-  <img src="assets/dashboard_scans.png" alt="Recent Scans table and Threat Categories" width="900"/>
-</p>
+![Recent Scans table and Threat Categories](assets/dashboard_scans.png)
 
 <br/>
 
@@ -59,9 +51,7 @@ Scroll down to see your most recent scans with URLs, verdicts (Safe, Suspicious,
 
 Scam Sentry uses a **two-layer detection system** that balances speed with intelligence.
 
-<p align="center">
-  <img src="assets/architecture.png" alt="Scam Sentry Architecture Diagram" width="850"/>
-</p>
+![Scam Sentry Architecture Diagram](assets/architecture.png)
 
 ### Layer 1: Rule-Based Detection (Instant)
 
